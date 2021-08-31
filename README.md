@@ -1,2 +1,1 @@
-# intiv
 # intiv-utils
