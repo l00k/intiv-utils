@@ -8,7 +8,7 @@ export default class Parent
     @Inject()
     public fooSample : Foo;
 
-    @Inject('service')
+    @Inject({ name: 'service' })
     public fooService : Foo;
 
 }

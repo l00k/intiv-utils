@@ -10,7 +10,7 @@ export default class Child
     @Inject()
     public otherFooSample : Foo;
 
-    @Inject('service')
+    @Inject({ name: 'service' })
     public sameFooService : Foo;
 
 }

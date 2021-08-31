@@ -4,8 +4,6 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "build": "tsc",
-        "watch": "tsc-watch",
         "test": "jest"
     },
     "repository": {
