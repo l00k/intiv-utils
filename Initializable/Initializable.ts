@@ -1,12 +1,6 @@
-import { Mapping, Properties, PropertySymbol, MappingSymbol, ClassConstructor } from './def';
+import { Mapping, Properties, PropertySymbol, MappingSymbol, ClassConstructor, RecursivePartial } from './def';
 import PropertyDescriptor from './PropertyDescriptor';
 
-type RecursivePartial<T> = {
-  [P in keyof T]?:
-    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
-    T[P] extends object ? RecursivePartial<T[P]> :
-    T[P];
-};
 
 export default class Initializable<T>
 {
