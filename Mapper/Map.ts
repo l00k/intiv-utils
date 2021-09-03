@@ -11,7 +11,7 @@ function mapObject(plainValue : any, mapOptions : MapOptions)
             : plainToClass(mapOptions.targetClass, plainValue);
     }
     catch (exception) {
-        throw new MappingException(exception);
+        throw new MappingException(<string> exception);
     }
 }
 
