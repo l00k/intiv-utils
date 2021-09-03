@@ -10,7 +10,9 @@ export default function DependencyInjection<T>() {
             constructor(...ctorArgs : any[])
             {
                 super(...ctorArgs);
-                ObjectManager.loadDependencies(this, Target.prototype);
+
+                ObjectManager.getSingleton()
+                    .loadDependencies(this, Target.prototype);
             }
         };
 

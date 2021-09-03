@@ -26,7 +26,9 @@ export default class EventBus
         if (observerClass) {
             let observer = this.observers.get(observerClass);
             if (!observer) {
-                observer = ObjectManager.getInstance(<any> observerClass.constructor);
+                const objectManager = ObjectManager.getSingleton();
+
+                observer = objectManager.getInstance(<any> observerClass.constructor);
                 this.observers.set(observerClass, observer);
             }
 

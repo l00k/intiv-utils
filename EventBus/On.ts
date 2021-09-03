@@ -8,7 +8,9 @@ export type ClassConstructor<T = {}> = new (...args : any[]) => T;
 function On<T extends Observer>(eventName : string)
 {
     return (Target : T, method : string, descriptor : PropertyDescriptor) => {
-        let eventBus = <EventBus> ObjectManager.getInstance(EventBus);
+        const objectManager = ObjectManager.getSingleton();
+
+        const eventBus = <EventBus> objectManager.getInstance(EventBus);
         eventBus.on(eventName, descriptor.value, <any>Target);
     };
 }

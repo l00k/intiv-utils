@@ -1,4 +1,4 @@
-import { ReleaseSymbol } from './ObjectManager';
+import { ReleaseSymbol } from './def';
 
 
 export default abstract class ServiceWrapper<T>
