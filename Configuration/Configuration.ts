@@ -42,7 +42,7 @@ class Configuration
 
     public injectConfigurationValues(object : Object)
     {
-        const injections = this.injections[object.constructor.prototype];
+        const injections = this.injections.get(object.constructor.prototype);
         if (injections) {
             for (const propertyName in injections) {
                 const injection : InjectionDescription = injections[propertyName];
