@@ -5,7 +5,7 @@ declare const window;
 declare const global;
 
 type Services = {
-    [name : string] : any
+    [name : string] : Object
 };
 
 type TaggableServices = {
@@ -24,8 +24,10 @@ export default class ObjectManager
 
     protected static readonly STORAGE_KEY = 'ObjectManager_N1Lkxd2DNNNWCPOUUOEBktEbvKzr6tmx';
 
-
-    protected instances : Services = {};
+    
+    protected instances : Object[] = [];
+    
+    protected services : Services = {};
 
     protected taggable : TaggableServices = {};
 
@@ -46,26 +48,16 @@ export default class ObjectManager
     public getInstance<T>(Klass : ClassConstructor<T>, ctorArgs : any[] = []) : T
     {
         // note: possible to implement singleton here
-    
         return this.createInstance(Klass, ctorArgs);
-    }
-
-    public bindInstance(object : any) : void
-    {
-        if (this.instances[object.name]) {
-            throw new Error(`Instance typed as ${ object.name } already has been bonded`);
-        }
-
-        this.instances[object.name] = object;
     }
 
     public getService<T>(name : string) : T
     {
-        if (!this.instances[name]) {
+        if (!this.services[name]) {
             throw new Error(`Instance named as ${ name } hasn't been bonded yet`);
         }
 
-        return this.instances[name];
+        return <any> this.services[name];
     }
 
     public getServicesByTag<T>(tag : string)
@@ -75,11 +67,11 @@ export default class ObjectManager
 
     public bindService(service : any, name : string) : void
     {
-        if (this.instances[name]) {
+        if (this.services[name]) {
             throw new Error(`Instance named as ${ name } already has been bonded`);
         }
 
-        this.instances[name] = service;
+        this.services[name] = service;
     }
 
     protected createInstance<T>(Klass : any, ctorArgs : any[] = []) : T
@@ -93,6 +85,8 @@ export default class ObjectManager
         if (object[InitializeSymbol]) {
             object[InitializeSymbol]();
         }
+        
+        this.instances.push(object);
 
         return object;
     }
@@ -178,13 +172,19 @@ export default class ObjectManager
 
     public async releaseAll()
     {
-        for (const instanceName in this.instances) {
-            const instance = this.instances[instanceName];
+        for (const service of Object.values(this.services)) {
+            if (service[ReleaseSymbol]) {
+                await service[ReleaseSymbol]();
+            }
+        }
+        this.services = {};
+        
+        for (const instance of this.instances) {
             if (instance[ReleaseSymbol]) {
                 await instance[ReleaseSymbol]();
             }
-            delete this.instances[instanceName];
         }
+        this.instances = [];
     }
 
 }
