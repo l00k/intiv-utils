@@ -29,15 +29,11 @@ class Configuration
 
     public static getSingleton() : Configuration
     {
-        const globalScope = global !== undefined
-            ? global
-            : window;
-
-        if (!globalScope[Configuration.STORAGE_KEY]) {
-            globalScope[Configuration.STORAGE_KEY] = new Configuration();
+        if (!globalThis[Configuration.STORAGE_KEY]) {
+            globalThis[Configuration.STORAGE_KEY] = new Configuration();
         }
 
-        return globalScope[Configuration.STORAGE_KEY];
+        return globalThis[Configuration.STORAGE_KEY];
     }
 
     public injectConfigurationValues(object : Object)

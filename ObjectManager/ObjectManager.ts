@@ -1,4 +1,4 @@
-import { InjectionDescription, ClassConstructor, InjectableOptions, ReleaseSymbol } from './def';
+import { InjectionDescription, ClassConstructor, InjectableOptions, ReleaseSymbol, InitializeSymbol } from './def';
 
 
 declare const window;
@@ -10,7 +10,7 @@ type Services = {
 
 type TaggableServices = {
     [tag : string] : {
-        [key : string] : any
+        [key : string] : Object
     }
 };
 
@@ -36,24 +36,18 @@ export default class ObjectManager
 
     public static getSingleton() : ObjectManager
     {
-        const globalScope = global !== undefined
-            ? global
-            : window;
-
-        if (!globalScope[ObjectManager.STORAGE_KEY]) {
-            globalScope[ObjectManager.STORAGE_KEY] = new ObjectManager();
+        if (!globalThis[ObjectManager.STORAGE_KEY]) {
+            globalThis[ObjectManager.STORAGE_KEY] = new ObjectManager();
         }
 
-        return globalScope[ObjectManager.STORAGE_KEY];
+        return globalThis[ObjectManager.STORAGE_KEY];
     }
 
     public getInstance<T>(Klass : ClassConstructor<T>, ctorArgs : any[] = []) : T
     {
-        if (!this.instances[Klass.name]) {
-            this.instances[Klass.name] = this.createInstance(Klass, ctorArgs);
-        }
-
-        return this.instances[Klass.name];
+        // note: possible to implement singleton here
+    
+        return this.createInstance(Klass, ctorArgs);
     }
 
     public bindInstance(object : any) : void
@@ -74,7 +68,7 @@ export default class ObjectManager
         return this.instances[name];
     }
 
-    public getServicesByTag<T>(tag : string) : any
+    public getServicesByTag<T>(tag : string)
     {
         return this.taggable[tag];
     }
@@ -94,6 +88,11 @@ export default class ObjectManager
         this.loadDependencies(object, Klass.prototype);
 
         this.handlers.forEach(handler => handler(object));
+        
+        // initialize
+        if (object[InitializeSymbol]) {
+            object[InitializeSymbol]();
+        }
 
         return object;
     }
@@ -105,17 +104,19 @@ export default class ObjectManager
         injectionDescription : InjectionDescription
     )
     {
-        let targetInjections = this.injections.get(Target);
+        const TargetConstructor = Target.constructor;
+    
+        let targetInjections = this.injections.get(TargetConstructor);
         if (!targetInjections) {
             targetInjections = {};
-            this.injections.set(Target, targetInjections);
+            this.injections.set(TargetConstructor, targetInjections);
         }
 
         targetInjections[propertyName] = injectionDescription;
     }
 
     public registerInjectable(
-        Target : Object,
+        Target : ClassConstructor<any>,
         injectableOptions : InjectableOptions
     )
     {
@@ -142,11 +143,14 @@ export default class ObjectManager
         Type : ClassConstructor<T>
     )
     {
+        // fetch injections from all classes in inheritance tree
         let targetInjections = {};
         do {
+            const nodeInjections = this.injections.get(Type.constructor);
+        
             targetInjections = {
-                ...targetInjections,
-                ...this.injections.get(Type)
+                ...nodeInjections,
+                ...targetInjections
             };
 
             Type = Object.getPrototypeOf(Type);

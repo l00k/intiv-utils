@@ -1,3 +1,4 @@
+export const InitializeSymbol = Symbol('Initialize');
 export const ReleaseSymbol = Symbol('Release');
 
 export type ClassConstructor<T> = {
