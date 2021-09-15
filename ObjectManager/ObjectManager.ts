@@ -28,12 +28,17 @@ export default class ObjectManager
     protected instances : Object[] = [];
     
     protected services : Services = {};
+    
+    protected singletons : Map<Object, any> = new Map();
 
     protected taggable : TaggableServices = {};
 
-    protected injections : Injections = new Map();
-
     protected handlers : Handler[] = [];
+
+
+    protected singletonRegistry : Map<Object, boolean> = new Map();
+
+    protected injectionRegistry : Injections = new Map();
 
 
     public static getSingleton() : ObjectManager
@@ -47,7 +52,16 @@ export default class ObjectManager
 
     public getInstance<T>(Klass : ClassConstructor<T>, ctorArgs : any[] = []) : T
     {
-        // note: possible to implement singleton here
+        const isSingleton = this.singletonRegistry.has(Klass);
+        if (isSingleton) {
+            if (!this.singletons.has(Klass)) {
+                const singleton = this.createInstance(Klass);
+                this.singletons.set(Klass, singleton);
+            }
+        
+            return this.singletons.get(Klass);
+        }
+        
         return this.createInstance(Klass, ctorArgs);
     }
 
@@ -100,13 +114,18 @@ export default class ObjectManager
     {
         const TargetConstructor = Target.constructor;
     
-        let targetInjections = this.injections.get(TargetConstructor);
+        let targetInjections = this.injectionRegistry.get(TargetConstructor);
         if (!targetInjections) {
             targetInjections = {};
-            this.injections.set(TargetConstructor, targetInjections);
+            this.injectionRegistry.set(TargetConstructor, targetInjections);
         }
 
         targetInjections[propertyName] = injectionDescription;
+    }
+
+    public registerSingleton(TargetConstructor : Object)
+    {
+        this.singletonRegistry.set(TargetConstructor, true);
     }
 
     public registerInjectable(
@@ -140,7 +159,7 @@ export default class ObjectManager
         // fetch injections from all classes in inheritance tree
         let targetInjections = {};
         do {
-            const nodeInjections = this.injections.get(Type.constructor);
+            const nodeInjections = this.injectionRegistry.get(Type.constructor);
         
             targetInjections = {
                 ...nodeInjections,
