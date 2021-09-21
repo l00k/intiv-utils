@@ -36,15 +36,30 @@ class Configuration
         return globalThis[Configuration.STORAGE_KEY];
     }
 
-    public injectConfigurationValues(object : Object)
+    public injectConfigurationValues(object : Object, Type : Object)
     {
-        const injections = this.injections.get(object.constructor.prototype);
-        if (injections) {
-            for (const propertyName in injections) {
-                const injection : InjectionDescription = injections[propertyName];
-                object[propertyName] = this.get(injection.configPath, injection.defaultValue);
+        const values = {};
+    
+        // fetch injections from all classes in inheritance tree
+        let targetInjections = {};
+        do {
+            const injections = this.injections.get(Type);
+            if (injections) {
+                for (const propertyName in injections) {
+                    if (values[propertyName]) {
+                        continue;
+                    }
+                    
+                    const injection : InjectionDescription = injections[propertyName];
+                    values[propertyName] = this.get(injection.configPath, injection.defaultValue);
+                }
             }
+
+            Type = Object.getPrototypeOf(Type);
         }
+        while (Type !== Object.prototype);
+        
+        Object.assign(object, values);
     }
 
     public registerInjection(

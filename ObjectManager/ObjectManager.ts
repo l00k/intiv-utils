@@ -16,7 +16,7 @@ type TaggableServices = {
 
 type Injections = Map<Object, { [propertyName : string] : InjectionDescription }>;
 
-type Handler = (object : Object) => any;
+type Handler = (object : Object, Type : Object) => any;
 
 
 export default class ObjectManager
@@ -92,8 +92,6 @@ export default class ObjectManager
     {
         const object = new Klass(...ctorArgs);
         this.loadDependencies(object, Klass.prototype);
-
-        this.handlers.forEach(handler => handler(object));
         
         // initialize
         if (object[InitializeSymbol]) {
@@ -157,18 +155,20 @@ export default class ObjectManager
     )
     {
         // fetch injections from all classes in inheritance tree
+        let WorkingType = Type;
+        
         let targetInjections = {};
         do {
-            const nodeInjections = this.injectionRegistry.get(Type.constructor);
+            const nodeInjections = this.injectionRegistry.get(WorkingType.constructor);
         
             targetInjections = {
                 ...nodeInjections,
                 ...targetInjections
             };
 
-            Type = Object.getPrototypeOf(Type);
+            WorkingType = Object.getPrototypeOf(WorkingType);
         }
-        while (Type !== Object.prototype);
+        while (WorkingType !== Object.prototype);
 
         if (!targetInjections) {
             return;
@@ -187,6 +187,9 @@ export default class ObjectManager
                 object[propertyName] = this.getInstance(injection.type, injection.ctorArgs);
             }
         }
+        
+        // external handlers
+        this.handlers.forEach(handler => handler(object, Type));
     }
 
     public async releaseAll()
