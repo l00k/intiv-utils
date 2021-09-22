@@ -1,3 +1,6 @@
+import Logger from "./Logger";
+
+
 function isPlainObject(v : any) : boolean
 {
     return (!!v) && (v.constructor === Object);
@@ -15,8 +18,10 @@ function isArrowFunction(v : any) : boolean
     return isFunction(v) && !(native || plain);
 }
 
+
 export {
     isPlainObject,
     isFunction,
     isArrowFunction,
+    Logger
 };
