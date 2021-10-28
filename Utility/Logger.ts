@@ -1,3 +1,6 @@
+import { inspect } from 'util';
+import colors from 'colors';
+
 export default class Logger
 {
     
@@ -8,32 +11,38 @@ export default class Logger
     
     public log (...args : any[])
     {
-        console.log(`[${this.serviceName}]`, ...args);
+        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        console.log(serviceName, ...args);
     }
     
     public info (...args : any[])
     {
-        console.info(`[${this.serviceName}]`, ...args);
+        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        console.info(serviceName, ...args);
     }
     
     public warn (...args : any[])
     {
-        console.warn(`[${this.serviceName}]`, ...args);
+        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        console.warn(serviceName, ...args);
     }
     
     public debug (...args : any[])
     {
-        console.debug(`[${this.serviceName}]`, ...args);
+        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        console.debug(serviceName, ...args);
     }
     
     public error (...args : any[])
     {
-        console.error(`[${this.serviceName}]`, ...args);
+        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        console.error(serviceName, ...args);
     }
     
     public dir (...args : any[])
     {
-        console.error(`[${this.serviceName}]`);
+        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        console.error(serviceName);
         // @ts-ignore
         console.dir(...args);
     }
