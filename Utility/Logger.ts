@@ -11,13 +11,13 @@ export default class Logger
     
     public log (...args : any[])
     {
-        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        const serviceName = colors.white(`[${this.serviceName}]`);
         console.log(serviceName, ...args);
     }
     
     public info (...args : any[])
     {
-        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        const serviceName = colors.cyan(`[${this.serviceName}]`);
         console.info(serviceName, ...args);
     }
     
@@ -29,13 +29,13 @@ export default class Logger
     
     public debug (...args : any[])
     {
-        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        const serviceName = colors.grey(`[${this.serviceName}]`);
         console.debug(serviceName, ...args);
     }
     
     public error (...args : any[])
     {
-        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        const serviceName = colors.red(`[${this.serviceName}]`);
         console.error(serviceName, ...args);
     }
     
