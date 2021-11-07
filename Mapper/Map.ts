@@ -1,21 +1,11 @@
+import 'reflect-metadata';
 import { plainToClass } from 'class-transformer';
-import { MapOptions, MapSymbol } from './def';
+import { MapOptions, mappingFunction, MapSymbol } from './def';
 import MappingException from './MappingException';
 
 
-function mapObject(plainValue : any, mapOptions : MapOptions)
-{
-    try {
-        return plainValue instanceof mapOptions.targetClass
-            ? plainValue
-            : plainToClass(mapOptions.targetClass, plainValue);
-    }
-    catch (exception) {
-        throw new MappingException(<string> exception);
-    }
-}
 
-function Map<T>(options? : MapOptions)
+export default function Map<T>(options? : MapOptions)
 {
     return (Target : Object, method : string, parameterIdx : number) => {
         const TargetProto = Target.constructor.prototype;
@@ -29,7 +19,7 @@ function Map<T>(options? : MapOptions)
             options = {};
         }
 
-        options.mappingFunction = mapObject;
+        options.mappingFunction = mappingFunction;
 
         if (!options.targetClass) {
             const paramTypes = Reflect.getMetadata('design:paramtypes', Target, method);
@@ -39,5 +29,3 @@ function Map<T>(options? : MapOptions)
         MethodProto[MapSymbol][parameterIdx] = options;
     };
 }
-
-export default Map;

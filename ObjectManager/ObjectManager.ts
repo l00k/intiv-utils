@@ -139,7 +139,8 @@ export default class ObjectManager
                 this.taggable[injectableOptions.tag] = {};
             }
 
-            this.taggable[injectableOptions.tag][injectableOptions.key] = instance;
+            const key = injectableOptions.key || Object.values(this.taggable[injectableOptions.tag]).length;
+            this.taggable[injectableOptions.tag][key] = instance;
         }
     }
 

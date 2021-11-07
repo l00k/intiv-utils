@@ -1,3 +1,6 @@
+import { plainToClass } from 'class-transformer';
+import MappingException from './MappingException';
+
 export const MapSymbol = Symbol('Mapping');
 
 type ClassConstructor<T> = {
@@ -13,3 +16,15 @@ export type MapOptions = {
         [name : string] : any
     }
 };
+
+export function mappingFunction(plainValue : any, mapOptions : MapOptions)
+{
+    try {
+        return plainValue instanceof mapOptions.targetClass
+            ? plainValue
+            : plainToClass(mapOptions.targetClass, plainValue);
+    }
+    catch (exception) {
+        throw new MappingException(<string> exception);
+    }
+}

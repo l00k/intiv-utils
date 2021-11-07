@@ -1,7 +1,8 @@
-import { MapOptions, MapSymbol } from './def';
+import 'reflect-metadata';
+import { MapOptions, MapSymbol, mappingFunction } from './def';
 
 
-function ApplyMapping()
+export default function ApplyMapping()
 {
     return (Target : Object, method : string, descriptor : any) => {
         const TargetProto = Target.constructor.prototype;
@@ -20,6 +21,7 @@ function ApplyMapping()
             if (!MethodProto[MapSymbol][parameterIdx]) {
                 MethodProto[MapSymbol][parameterIdx] = {
                     targetClass: paramType,
+                    mappingFunction: mappingFunction,
                 };
             }
         }
@@ -37,7 +39,7 @@ function ApplyMapping()
                 }
 
                 const paramMap : MapOptions = MethodProto[MapSymbol][parameterIdx];
-
+                
                 // resolve getter
                 let plainValue = !!paramMap.getterCallee
                     ? await paramMap.getterCallee.call(this, ...params)
@@ -50,5 +52,3 @@ function ApplyMapping()
         };
     };
 }
-
-export default ApplyMapping;
