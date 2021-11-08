@@ -41,7 +41,7 @@ export default class Logger
     
     public dir (...args : any[])
     {
-        const serviceName = colors.yellow(`[${this.serviceName}]`);
+        const serviceName = colors.white(`[${this.serviceName}]`);
         console.error(serviceName);
         // @ts-ignore
         console.dir(...args);
