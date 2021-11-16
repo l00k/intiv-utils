@@ -48,10 +48,11 @@ export default class Validator
 
                 if (!isEmpty(validateResult)) {
                     result.properties[property] = validateResult.field;
+                    result.valid = false;
                 }
             }
 
-            // validate subojects
+            // validate child ojects
             if (object[property] instanceof Object) {
                 (<any>result.subObjects)[property] = this.validateObject(object[property]);
                 if (!result.subObjects[property].valid) {

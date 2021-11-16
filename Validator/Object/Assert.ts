@@ -1,26 +1,29 @@
+import validateJsExt from 'validate.js';
 import { ValidatorRulesSymbol, ValidatableObject } from '../def';
 
 
+type Rules = {
+    [rule : string]: any
+}
+
 export default function Assert(
-    rules : {} = {},
+    rules : Rules = {},
     validateType : boolean = true
 ) {
     return (Target : ValidatableObject, property : string) => {
-        const TargetProto = Target.constructor.prototype;
-
-        if (!TargetProto[ValidatorRulesSymbol]) {
-            TargetProto[ValidatorRulesSymbol] = {};
+        if (!Target[ValidatorRulesSymbol]) {
+            Target[ValidatorRulesSymbol] = {};
         }
 
-        if (!TargetProto[ValidatorRulesSymbol][property]) {
-            TargetProto[ValidatorRulesSymbol][property] = {
+        if (!Target[ValidatorRulesSymbol][property]) {
+            Target[ValidatorRulesSymbol][property] = {
                 validateType,
                 rules: {},
             };
         }
 
         Object.assign(
-            TargetProto[ValidatorRulesSymbol].properties[property].rules,
+            Target[ValidatorRulesSymbol][property].rules,
             rules
         );
     };
