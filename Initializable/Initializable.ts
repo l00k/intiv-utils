@@ -2,6 +2,11 @@ import { Mapping, Properties, PropertySymbol, MappingSymbol, ClassConstructor, R
 import PropertyDescriptor from './PropertyDescriptor';
 
 
+type InitializableSetterConfig = {
+    skipNonExistingProps: boolean,
+};
+
+
 export default class Initializable<T>
 {
 
@@ -9,11 +14,16 @@ export default class Initializable<T>
     {
     }
 
-    public setData(data? : RecursivePartial<T>)
+    public setData(data? : RecursivePartial<T>, config? : InitializableSetterConfig)
     {
         if (!data) {
             return;
         }
+        
+        config = {
+            skipNonExistingProps: false,
+            ...config,
+        };
 
         const Target = Object.getPrototypeOf(this);
 
@@ -28,7 +38,12 @@ export default class Initializable<T>
 
                 let propertyDsrp = properties[property];
                 if (!propertyDsrp) {
-                    propertyDsrp = new PropertyDescriptor({ preserveRaw: true });
+                    if (config.skipNonExistingProps) {
+                        return;
+                    }
+                    else {
+                        propertyDsrp = new PropertyDescriptor({ preserveRaw: true });
+                    }
                 }
 
                 // population blocked
