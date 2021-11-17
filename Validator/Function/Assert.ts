@@ -1,27 +1,31 @@
-import { ValidatorRulesSymbol, ValidatableFunction } from '../def';
+import { ValidatorRulesSymbol, Rules } from '../def';
 
 
 export default function Assert(
-    rules : {},
+    rules : Rules = {},
     isComplex : boolean = false
 ) {
     return (Target : Object, method : string, parameterIdx : number) => {
-        const TargetProto = Target.constructor.prototype;
-        const MethodProto : ValidatableFunction = TargetProto[method];
-
-        if (!MethodProto[ValidatorRulesSymbol]) {
-            MethodProto[ValidatorRulesSymbol] = {};
+        if (!Target[ValidatorRulesSymbol]) {
+            Target[ValidatorRulesSymbol] = {
+                properties: {},
+                methods: {},
+            };
         }
 
-        if (!MethodProto[ValidatorRulesSymbol][parameterIdx]) {
-            MethodProto[ValidatorRulesSymbol][parameterIdx] = {
+        if (!Target[ValidatorRulesSymbol].methods[method]) {
+            Target[ValidatorRulesSymbol].methods[method] = {};
+        }
+
+        if (!Target[ValidatorRulesSymbol].methods[method][parameterIdx]) {
+            Target[ValidatorRulesSymbol].methods[method][parameterIdx] = {
+                rules: {},
                 isComplex,
-                rules: {}
             };
         }
 
         Object.assign(
-            MethodProto[ValidatorRulesSymbol][parameterIdx].rules,
+            Target[ValidatorRulesSymbol].methods[method][parameterIdx].rules,
             rules
         );
     };

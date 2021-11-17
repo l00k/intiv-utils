@@ -1,10 +1,6 @@
 import validateJsExt from 'validate.js';
-import { ValidatorRulesSymbol, ValidatableObject } from '../def';
+import { ValidatorRulesSymbol, ValidatableObject, Rules } from '../def';
 
-
-type Rules = {
-    [rule : string]: any
-}
 
 export default function Assert(
     rules : Rules = {},
@@ -12,18 +8,21 @@ export default function Assert(
 ) {
     return (Target : ValidatableObject, property : string) => {
         if (!Target[ValidatorRulesSymbol]) {
-            Target[ValidatorRulesSymbol] = {};
+            Target[ValidatorRulesSymbol] = {
+                properties: {},
+                methods: {},
+            };
         }
 
-        if (!Target[ValidatorRulesSymbol][property]) {
-            Target[ValidatorRulesSymbol][property] = {
+        if (!Target[ValidatorRulesSymbol].properties[property]) {
+            Target[ValidatorRulesSymbol].properties[property] = {
                 validateType,
                 rules: {},
             };
         }
 
         Object.assign(
-            Target[ValidatorRulesSymbol][property].rules,
+            Target[ValidatorRulesSymbol].properties[property].rules,
             rules
         );
     };

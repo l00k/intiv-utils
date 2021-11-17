@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 import { Exception } from '../Exception';
-import { ValidatorRulesSymbol, ValidatableObject, ValidatableFunction } from './def';
+import { ValidatorRulesSymbol, ValidatableObject, FunctionValidationConfig } from './def';
 import validateJsExt from './validateJsExt';
 import ValidationResult from './ValidationResult';
 
@@ -72,7 +72,6 @@ export default class Validator
     ) : ValidationResult
     {
         const TargetProto = Target.constructor.prototype;
-        const MethodProto = TargetProto[method];
 
         const result = new ValidationResult();
 
@@ -89,7 +88,7 @@ export default class Validator
 
         }
 
-        const validatorRules : ValidatableFunction = MethodProto[method];
+        const validatorRules : FunctionValidationConfig = TargetProto[ValidatorRulesSymbol].methods[method];
         if (isEmpty(validatorRules)) {
             return result;
         }
@@ -112,7 +111,11 @@ export default class Validator
                 const raw = isComplex
                     ? validateParameterResult
                     : validateParameterResult.field;
-                result.parameters[parameterIdx].push(raw);
+                    
+                result.parameters[parameterIdx] = [
+                    ...(result.parameters[parameterIdx] || []),
+                    raw
+                ];
             }
 
             if (
@@ -121,9 +124,10 @@ export default class Validator
                 && !this.validateType(parameters[parameterIdx], ParamTypes[parameterIdx])
             ) {
                 result.valid = false;
-                result.parameters[parameterIdx].push({
-                    rule: 'design:paramType'
-                });
+                result.parameters[parameterIdx] = [
+                    ...(result.parameters[parameterIdx] || []),
+                    { rule: 'design:paramType' }
+                ];
             }
         }
 
