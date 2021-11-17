@@ -13,14 +13,14 @@ export default class Validator
         const TargetProto = Object.getPrototypeOf(object);
 
         const result = new ValidationResult();
-
+        
         // no rules applied - return
         if (isEmpty(TargetProto[ValidatorRulesSymbol])) {
             return result;
         }
 
-        for (const property in TargetProto[ValidatorRulesSymbol]) {
-            const propertyRules = TargetProto[ValidatorRulesSymbol][property];
+        for (const property in TargetProto[ValidatorRulesSymbol].properties) {
+            const propertyRules = TargetProto[ValidatorRulesSymbol].properties[property];
 
             if (propertyRules.validateType) {
                 // validate property type
