@@ -9,6 +9,11 @@ export default class PromiseAggregator
         return Promise.all(PromiseAggregator.prepare(iterator, lambda));
     }
 
+    public static async allSettled<T, R>(iterator : Iterable<T>, lambda : RequestLambda<T, R>): Promise<PromiseSettledResult<R>[]>
+    {
+        return Promise.allSettled(PromiseAggregator.prepare(iterator, lambda));
+    }
+
     protected static prepare<T, R>(iterator : Iterable<T>, lambda : RequestLambda<T, R>): Promise<R>[]
     {
         const promises : Promise<any>[] = [];
