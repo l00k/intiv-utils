@@ -27,6 +27,7 @@ export type Rules = {
         maximum? : number,
     } | number,
     numericality? : {
+        noStrings? : true,
         onlyInteger? : true,
         strict? : true,
         greaterThan? : number,
@@ -43,36 +44,37 @@ export type Rules = {
     } | true,
     type? : 'array' | 'integer' | 'number' | 'string' | 'date' | 'boolean',
     url? : {
-        schemes?: string[],
-        allowLocal?: true,
-        allowDataUrl?: true,
+        schemes? : string[],
+        allowLocal? : true,
+        allowDataUrl? : true,
     } | true,
 };
 
+export type FunctionValidationDef = {
+    rules : ValidationRules
+    isComplex : boolean,
+};
 
 export type FunctionValidationConfig = {
+    [parameterIdx : number] : FunctionValidationDef
+};
 
-    [parameterIdx : number] : {
-        rules : ValidationRules
-        isComplex : boolean,
-    }
+export type PropertyValidationDef = {
+    rules : ValidationRules,
+    validateType : boolean,
+};
 
-}
-
-
-export class ValidatableObject extends Object
+export class ValidatableObject
+    extends Object
 {
-
+    
     [ValidatorRulesSymbol]? : {
-        properties: {
-            [property : string] : {
-                rules : ValidationRules,
-                validateType : boolean,
-            }
+        properties : {
+            [property : string] : PropertyValidationDef
         },
-        methods: {
+        methods : {
             [method : string] : FunctionValidationConfig
         }
     };
-
+    
 }

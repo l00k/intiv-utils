@@ -1,6 +1,12 @@
 import { isEmpty } from 'lodash';
 import { Exception } from '../Exception';
-import { ValidatorRulesSymbol, ValidatableObject, FunctionValidationConfig } from './def';
+import {
+    ValidatorRulesSymbol,
+    ValidatableObject,
+    FunctionValidationConfig,
+    ValidationRules,
+    PropertyValidationDef
+} from './def';
 import validateJsExt from './validateJsExt';
 import ValidationResult from './ValidationResult';
 
@@ -8,21 +14,28 @@ import ValidationResult from './ValidationResult';
 export default class Validator
 {
 
-    public static validateObject(object : ValidatableObject) : ValidationResult
+    public static validateObject(
+        object : ValidatableObject,
+        validateAsClass? : typeof Object
+    ) : ValidationResult
     {
-        const TargetProto = Object.getPrototypeOf(object);
+        const TargetProto = validateAsClass
+            ? validateAsClass.prototype
+            : Object.getPrototypeOf(object);
 
         const result = new ValidationResult();
         
         // no rules applied - return
-        if (isEmpty(TargetProto[ValidatorRulesSymbol])) {
+        const propertyValidationDefs : { [property : string] : PropertyValidationDef } =
+            TargetProto[ValidatorRulesSymbol]?.properties;
+        if (isEmpty(propertyValidationDefs)) {
             return result;
         }
 
-        for (const property in TargetProto[ValidatorRulesSymbol].properties) {
-            const propertyRules = TargetProto[ValidatorRulesSymbol].properties[property];
+        for (const property in propertyValidationDefs) {
+            const propertyValidationDef = propertyValidationDefs[property];
 
-            if (propertyRules.validateType) {
+            if (propertyValidationDef.validateType) {
                 // validate property type
                 const Type = Reflect.getMetadata('design:type', TargetProto, property);
                 if (!this.validateType(object[property], Type)) {
@@ -38,23 +51,25 @@ export default class Validator
                 }
             }
 
-            if (!isEmpty(propertyRules.rules)) {
+            if (!isEmpty(propertyValidationDef.rules)) {
                 // validate rules
                 const validateResult = validateJsExt(
-                    { field: object[property] },
-                    { field: propertyRules.rules },
+                    object,
+                    { [property]: propertyValidationDef.rules },
                     { format: 'intiv' }
                 );
 
                 if (!isEmpty(validateResult)) {
-                    result.properties[property] = validateResult.field;
+                    result.properties[property] = validateResult[property];
                     result.valid = false;
                 }
             }
 
             // validate child ojects
             if (object[property] instanceof Object) {
-                (<any>result.subObjects)[property] = this.validateObject(object[property]);
+                const Type = Reflect.getMetadata('design:type', TargetProto, property);
+                
+                result.subObjects[property] = this.validateObject(object[property], Type);
                 if (!result.subObjects[property].valid) {
                     result.valid = false;
                 }
@@ -72,17 +87,20 @@ export default class Validator
     ) : ValidationResult
     {
         const TargetProto = Target.constructor.prototype;
+        const ParamTypes = Reflect.getMetadata('design:paramtypes', TargetProto, method);
 
         const result = new ValidationResult();
 
         // inner object validation
         for (const parameterIdx in parameters) {
+            const ParamType = ParamTypes[parameterIdx];
             const value = parameters[parameterIdx];
 
-            if (value instanceof Object) {
-                const validateResult = this.validateObject(value);
+            if (ParamType && ParamType != Object) {
+                const validateResult = this.validateObject(value, ParamType);
                 if (!validateResult.valid) {
-                    (<any>result.subObjects)[parameterIdx] = validateResult;
+                    result.valid = false;
+                    result.subObjects[parameterIdx] = validateResult;
                 }
             }
 
@@ -92,9 +110,6 @@ export default class Validator
         if (isEmpty(validatorRules)) {
             return result;
         }
-
-        // specific rules
-        const ParamTypes = Reflect.getMetadata('design:paramtypes', TargetProto, method);
 
         for (const parameterIdx in validatorRules) {
             const isComplex = validatorRules[parameterIdx].isComplex;
