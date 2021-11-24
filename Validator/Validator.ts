@@ -1,11 +1,11 @@
 import { isEmpty } from 'lodash';
 import { Exception } from '../Exception';
 import {
-    ValidatorRulesSymbol,
+    ValidatorSymbol,
     ValidatableObject,
     FunctionValidationConfig,
     ValidationRules,
-    PropertyValidationDef
+    PropertyValidationDef, AssertObjectOptions, Rules
 } from './def';
 import validateJsExt from './validateJsExt';
 import ValidationResult from './ValidationResult';
@@ -14,20 +14,77 @@ import ValidationResult from './ValidationResult';
 export default class Validator
 {
 
+    protected static initObject(Target : ValidatableObject)
+    {
+        if (!Target[ValidatorSymbol]) {
+            Target[ValidatorSymbol] = {
+                allowUnspecifiedProperties: false,
+                properties: {},
+                methods: {},
+            };
+        }
+    }
+    
+    /**
+     * Object validation related section
+     */
+
+    public static registerObjectOptions(
+        Target : ValidatableObject,
+        options : AssertObjectOptions = {}
+    )
+    {
+        this.initObject(Target);
+        Object.assign(Target[ValidatorSymbol], options);
+    }
+
+    public static registerObjectPropertyAssertion(
+        Target : ValidatableObject,
+        property : string,
+        rules : Rules = {},
+        validateType : boolean = true
+    )
+    {
+        this.initObject(Target);
+
+        if (!Target[ValidatorSymbol].properties[property]) {
+            Target[ValidatorSymbol].properties[property] = {
+                validateType,
+                rules: {},
+            };
+        }
+
+        Object.assign(
+            Target[ValidatorSymbol].properties[property].rules,
+            rules
+        );
+    }
+
     public static validateObject(
         object : ValidatableObject,
         validateAsClass? : typeof Object
     ) : ValidationResult
     {
-        const TargetProto = validateAsClass
+        const TargetProto : typeof ValidatableObject = validateAsClass
             ? validateAsClass.prototype
             : Object.getPrototypeOf(object);
 
         const result = new ValidationResult();
         
+        // general object assertions
+        if (!TargetProto[ValidatorSymbol].allowUnspecifiedProperties) {
+            for (const property in object) {
+                const Type = Reflect.getMetadata('design:type', TargetProto, property);
+                if (!Type) {
+                    result.properties[property] = [ { rule: 'object:unspecifiedProperty' } ];
+                    result.valid = false;
+                }
+            }
+        }
+        
         // no rules applied - return
         const propertyValidationDefs : { [property : string] : PropertyValidationDef } =
-            TargetProto[ValidatorRulesSymbol]?.properties;
+            TargetProto[ValidatorSymbol]?.properties;
         if (isEmpty(propertyValidationDefs)) {
             return result;
         }
@@ -60,7 +117,11 @@ export default class Validator
                 );
 
                 if (!isEmpty(validateResult)) {
-                    result.properties[property] = validateResult[property];
+                    if (!result.properties[property]) {
+                        result.properties[property] = [];
+                    }
+                    
+                    result.properties[property].push(...validateResult[property]);
                     result.valid = false;
                 }
             }
@@ -69,14 +130,44 @@ export default class Validator
             if (object[property] instanceof Object) {
                 const Type = Reflect.getMetadata('design:type', TargetProto, property);
                 
-                result.subObjects[property] = this.validateObject(object[property], Type);
-                if (!result.subObjects[property].valid) {
+                result.childObjects[property] = this.validateObject(object[property], Type);
+                if (!result.childObjects[property].valid) {
                     result.valid = false;
                 }
             }
         }
 
         return result;
+    }
+    
+    /**
+     * Method validation related section
+     */
+     
+    public static registerMethodParameterAssertion(
+        Target : ValidatableObject,
+        method : string,
+        parameterIdx : number,
+        rules : Rules = {},
+        isComplex : boolean = false
+    ) {
+        this.initObject(Target);
+        
+        if (!Target[ValidatorSymbol].methods[method]) {
+            Target[ValidatorSymbol].methods[method] = {};
+        }
+
+        if (!Target[ValidatorSymbol].methods[method][parameterIdx]) {
+            Target[ValidatorSymbol].methods[method][parameterIdx] = {
+                rules: {},
+                isComplex,
+            };
+        }
+
+        Object.assign(
+            Target[ValidatorSymbol].methods[method][parameterIdx].rules,
+            rules
+        );
     }
 
     public static validateMethod(
@@ -100,13 +191,12 @@ export default class Validator
                 const validateResult = this.validateObject(value, ParamType);
                 if (!validateResult.valid) {
                     result.valid = false;
-                    result.subObjects[parameterIdx] = validateResult;
+                    result.childObjects[parameterIdx] = validateResult;
                 }
             }
-
         }
 
-        const validatorRules : FunctionValidationConfig = TargetProto[ValidatorRulesSymbol].methods[method];
+        const validatorRules : FunctionValidationConfig = TargetProto[ValidatorSymbol].methods[method];
         if (isEmpty(validatorRules)) {
             return result;
         }

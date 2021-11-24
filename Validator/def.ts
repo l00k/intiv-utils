@@ -1,4 +1,4 @@
-export const ValidatorRulesSymbol = Symbol('ValidatorRules');
+export const ValidatorSymbol = Symbol('Validator');
 
 export type ValidationError = {
     rule : string,
@@ -64,11 +64,15 @@ export type PropertyValidationDef = {
     validateType : boolean,
 };
 
+export type AssertObjectOptions = {
+    allowUnspecifiedProperties? : boolean,
+};
+
 export class ValidatableObject
     extends Object
 {
     
-    [ValidatorRulesSymbol]? : {
+    [ValidatorSymbol]? : AssertObjectOptions & {
         properties : {
             [property : string] : PropertyValidationDef
         },

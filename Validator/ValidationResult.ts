@@ -23,7 +23,7 @@ export default class ValidationResult
 
     public properties : PropertyErrorMap = {};
 
-    public subObjects : ErrorMap<ValidationResult> = {};
+    public childObjects : ErrorMap<ValidationResult> = {};
 
     public parameters : ParameterErrorMap = {};
 
