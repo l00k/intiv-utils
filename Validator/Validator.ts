@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, isPlainObject } from 'lodash';
 import { Exception } from '../Exception';
 import {
     ValidatorSymbol,
@@ -182,20 +182,6 @@ export default class Validator
 
         const result = new ValidationResult();
 
-        // inner object validation
-        for (const parameterIdx in parameters) {
-            const ParamType = ParamTypes[parameterIdx];
-            const value = parameters[parameterIdx];
-
-            if (ParamType && ParamType != Object) {
-                const validateResult = this.validateObject(value, ParamType);
-                if (!validateResult.valid) {
-                    result.valid = false;
-                    result.childObjects[parameterIdx] = validateResult;
-                }
-            }
-        }
-
         const validatorRules : FunctionValidationConfig = TargetProto[ValidatorSymbol].methods[method];
         if (isEmpty(validatorRules)) {
             return result;
@@ -221,6 +207,15 @@ export default class Validator
                     ...(result.parameters[parameterIdx] || []),
                     raw
                 ];
+            }
+            
+            const ParamType = ParamTypes[parameterIdx];
+            if (ParamType && ![Object, Date, String, Boolean, Number].includes(ParamType)) {
+                const validateResult = this.validateObject(value, ParamType);
+                if (!validateResult.valid) {
+                    result.valid = false;
+                    result.childObjects[parameterIdx] = validateResult;
+                }
             }
 
             if (
