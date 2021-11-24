@@ -8,6 +8,12 @@ type Services = {
     [name : string] : Object
 };
 
+type TaggableServiceCreators = {
+    [tag : string] : {
+        [key : string] : () => Object
+    }
+};
+
 type TaggableServices = {
     [tag : string] : {
         [key : string] : Object
@@ -31,6 +37,7 @@ export default class ObjectManager
     
     protected singletons : Map<Object, any> = new Map();
 
+    protected taggableCreators : TaggableServiceCreators = {};
     protected taggable : TaggableServices = {};
 
     protected handlers : Handler[] = [];
@@ -76,6 +83,16 @@ export default class ObjectManager
 
     public getServicesByTag<T>(tag : string)
     {
+        if (!this.taggable[tag]) {
+            this.taggable[tag] = {};
+        }
+        
+        for (const key in this.taggableCreators[tag]) {
+            if (!this.taggable[tag][key]) {
+                this.taggable[tag][key] = this.taggableCreators[tag][key]();
+            }
+        }
+    
         return this.taggable[tag];
     }
 
@@ -132,15 +149,15 @@ export default class ObjectManager
     )
     {
         const ctorArgs = injectableOptions.ctorArgs || [];
-        const instance = this.createInstance(Target, ctorArgs);
 
         if (injectableOptions.tag) {
-            if (!this.taggable[injectableOptions.tag]) {
-                this.taggable[injectableOptions.tag] = {};
+            if (!this.taggableCreators[injectableOptions.tag]) {
+                this.taggableCreators[injectableOptions.tag] = {};
             }
 
-            const key = injectableOptions.key || Object.values(this.taggable[injectableOptions.tag]).length;
-            this.taggable[injectableOptions.tag][key] = instance;
+            const key = injectableOptions.key
+                || Object.values(this.taggableCreators[injectableOptions.tag]).length;
+            this.taggableCreators[injectableOptions.tag][key] = () => this.createInstance(Target, ctorArgs);
         }
     }
 
