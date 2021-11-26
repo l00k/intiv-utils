@@ -6,12 +6,12 @@ type CacheEntries = {
     [key : string] : {
         value : any,
         createdAt : number,
-        ttl : number,
+        lifetime : number,
     }
 }
 
 type EntryConfig = {
-    ttl? : number
+    lifetime? : number
 };
 
 type EntryLambda<T> = () => T;
@@ -39,12 +39,12 @@ export default class RuntimeCache
         
         // return cached value if not expired
         if (this.entries[key]) {
-            if (!this.entries[key].ttl) {
+            if (!this.entries[key].lifetime) {
                 return this.entries[key].value;
             }
             
             const deltaTime = (Date.now() - this.entries[key].createdAt) / 1000;
-            if (deltaTime < this.entries[key].ttl) {
+            if (deltaTime < this.entries[key].lifetime) {
                 return this.entries[key].value;
             }
         }
@@ -52,7 +52,7 @@ export default class RuntimeCache
         this.entries[key] = {
             value: await entryLambda(),
             createdAt: Date.now(),
-            ttl: config.ttl
+            lifetime: config.lifetime
         };
         
         return this.entries[key].value;
@@ -64,12 +64,12 @@ export default class RuntimeCache
         
         // return cached value if not expired
         if (this.entries[key]) {
-            if (!this.entries[key].ttl) {
+            if (!this.entries[key].lifetime) {
                 return this.entries[key].value;
             }
             
             const deltaTime = (Date.now() - this.entries[key].createdAt) / 1000;
-            if (deltaTime < this.entries[key].ttl) {
+            if (deltaTime < this.entries[key].lifetime) {
                 return this.entries[key].value;
             }
         }
@@ -77,7 +77,7 @@ export default class RuntimeCache
         this.entries[key] = {
             value: entryLambda(),
             createdAt: Date.now(),
-            ttl: config.ttl
+            lifetime: config.lifetime
         };
         
         return this.entries[key].value;
@@ -86,7 +86,7 @@ export default class RuntimeCache
     protected prepareConfig (config : EntryConfig) : EntryConfig
     {
         return {
-            ttl: 0,
+            lifetime: 0,
             ...config,
         };
     }
