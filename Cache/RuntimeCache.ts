@@ -35,7 +35,7 @@ export default class RuntimeCache<T>
         return this.entries = {};
     }
     
-    public async get<T> (key : CacheEntryKey, entryLambda : EntryAsyncLambda<T>, config : EntryConfig = {}) : Promise<T>
+    public async get<Tm extends T> (key : CacheEntryKey, entryLambda : EntryAsyncLambda<Tm>, config : EntryConfig = {}) : Promise<Tm>
     {
         config = this.prepareConfig(config);
         
@@ -60,7 +60,7 @@ export default class RuntimeCache<T>
         return this.entries[key].value;
     }
     
-    public getSync<T> (key : CacheEntryKey, entryLambda : EntryLambda<T>, config : EntryConfig = {}) : T
+    public getSync<Tm extends T> (key : CacheEntryKey, entryLambda : EntryLambda<Tm>, config : EntryConfig = {}) : Tm
     {
         config = this.prepareConfig(config);
         
@@ -83,6 +83,12 @@ export default class RuntimeCache<T>
         };
         
         return this.entries[key].value;
+    }
+    
+    public getAll<Tm extends T>() : Tm[]
+    {
+        return Object.values(this.entries)
+            .map(e => e.value);
     }
     
     protected prepareConfig (config : EntryConfig) : EntryConfig
