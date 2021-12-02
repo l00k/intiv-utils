@@ -2,8 +2,10 @@ import { Inject } from '../ObjectManager';
 import { Logger } from '../Utility';
 
 
+type CacheEntryKey = string | number;
+
 type CacheEntries = {
-    [key : string] : {
+    [key : CacheEntryKey] : {
         value : any,
         createdAt : number,
         lifetime : number,
@@ -19,7 +21,7 @@ type EntryLambda<T> = () => T;
 type EntryAsyncLambda<T> = () => Promise<T>;
 
 
-export default class RuntimeCache
+export default class RuntimeCache<T>
 {
     
     @Inject({ ctorArgs: [ RuntimeCache.name ] })
@@ -33,7 +35,7 @@ export default class RuntimeCache
         return this.entries = {};
     }
     
-    public async get<T> (key : string, entryLambda : EntryAsyncLambda<T>, config : EntryConfig = {}) : Promise<T>
+    public async get<T> (key : CacheEntryKey, entryLambda : EntryAsyncLambda<T>, config : EntryConfig = {}) : Promise<T>
     {
         config = this.prepareConfig(config);
         
@@ -58,7 +60,7 @@ export default class RuntimeCache
         return this.entries[key].value;
     }
     
-    public getSync<T> (key : string, entryLambda : EntryLambda<T>, config : EntryConfig = {}) : T
+    public getSync<T> (key : CacheEntryKey, entryLambda : EntryLambda<T>, config : EntryConfig = {}) : T
     {
         config = this.prepareConfig(config);
         

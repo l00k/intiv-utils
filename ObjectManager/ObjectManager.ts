@@ -72,10 +72,14 @@ export default class ObjectManager
         return this.createInstance(Klass, ctorArgs);
     }
 
-    public getService<T>(name : string) : T
+    public getService<T>(name : string, Klass? : ClassConstructor<T>) : T
     {
         if (!this.services[name]) {
-            throw new Error(`Instance named as ${ name } hasn't been bonded yet`);
+            if (!Klass) {
+                throw new Error(`Instance named as ${ name } hasn't been bonded yet`);
+            }
+            
+            this.services[name] = this.createInstance(Klass);
         }
 
         return <any> this.services[name];
@@ -196,7 +200,7 @@ export default class ObjectManager
             const injection : InjectionDescription = targetInjections[propertyName];
 
             if (injection.name) {
-                object[propertyName] = this.getService(injection.name);
+                object[propertyName] = this.getService(injection.name, injection.type);
             }
             else if (injection.tag) {
                 object[propertyName] = this.getServicesByTag(injection.tag);
