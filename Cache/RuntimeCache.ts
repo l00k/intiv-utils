@@ -1,5 +1,6 @@
 import { Inject } from '../ObjectManager';
 import { Logger } from '../Utility';
+import { RuntimeException } from '../Exception';
 
 
 type CacheEntryKey = string | number;
@@ -18,7 +19,7 @@ type EntryConfig = {
 
 type EntryLambda<T> = () => T;
 
-type EntryAsyncLambda<T> = () => Promise<T>;
+type EntryAsyncLambda<T> = () => T|Promise<T>;
 
 
 export default class RuntimeCache<T>
@@ -51,8 +52,10 @@ export default class RuntimeCache<T>
             }
         }
         
+        const value = await entryLambda();
+        
         this.entries[key] = {
-            value: await entryLambda(),
+            value,
             createdAt: Date.now(),
             lifetime: config.lifetime
         };
@@ -76,8 +79,10 @@ export default class RuntimeCache<T>
             }
         }
         
+        const value = entryLambda();
+        
         this.entries[key] = {
-            value: entryLambda(),
+            value,
             createdAt: Date.now(),
             lifetime: config.lifetime
         };
@@ -85,7 +90,19 @@ export default class RuntimeCache<T>
         return this.entries[key].value;
     }
     
-    public getAll<Tm extends T>() : Tm[]
+    
+    public pullMultiple<Tm extends T> (keys : CacheEntryKey[]) : Tm[]
+    {
+        return keys.map(key => {
+            if (!this.entries[key]) {
+                throw new RuntimeException(`Entity not found for given key ${key}`, 1638497794091);
+            }
+            
+            return this.entries[key].value;
+        });
+    }
+    
+    public pullAll<Tm extends T>() : Tm[]
     {
         return Object.values(this.entries)
             .map(e => e.value);
