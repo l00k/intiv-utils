@@ -217,7 +217,7 @@ export default class ObjectManager
     public async releaseAll()
     {
         for (const service of Object.values(this.services)) {
-            if (service[ReleaseSymbol]) {
+            if (service?.[ReleaseSymbol]) {
                 await service[ReleaseSymbol]();
             }
         }
