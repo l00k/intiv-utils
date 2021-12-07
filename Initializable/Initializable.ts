@@ -1,20 +1,26 @@
-import { Mapping, Properties, PropertySymbol, MappingSymbol, ClassConstructor, RecursivePartial } from './def';
+import { MappingSymbol, Properties, PropertySymbol } from './def';
 import PropertyDescriptor from './PropertyDescriptor';
 
+type RecursivePartial<T> = {
+    [P in keyof T]? :
+    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+        T[P] extends object ? RecursivePartial<T[P]> :
+            T[P];
+};
 
 type InitializableSetterConfig = {
-    skipNonExistingProps: boolean,
+    skipNonExistingProps : boolean,
 };
 
 
 export default class Initializable<T>
 {
-
-    public constructor(data? : RecursivePartial<T>)
+    
+    public constructor (data? : RecursivePartial<T>)
     {
     }
-
-    public setData(data? : RecursivePartial<T>, config? : InitializableSetterConfig)
+    
+    public setData (data? : RecursivePartial<T>, config? : InitializableSetterConfig)
     {
         if (!data) {
             return;
@@ -24,18 +30,18 @@ export default class Initializable<T>
             skipNonExistingProps: false,
             ...config,
         };
-
+        
         const Target = Object.getPrototypeOf(this);
-
+        
         const mapping = Target[MappingSymbol] || {};
         const properties : Properties = Target[PropertySymbol] || {};
-
+        
         Object.entries(data)
-            .forEach(([fieldName, rawValue]) => {
+            .forEach(([ fieldName, rawValue ]) => {
                 const property = mapping[fieldName]
                     ? mapping[fieldName]
                     : fieldName;
-
+                
                 let propertyDsrp = properties[property];
                 if (!propertyDsrp) {
                     if (config.skipNonExistingProps) {
@@ -45,12 +51,12 @@ export default class Initializable<T>
                         propertyDsrp = new PropertyDescriptor({ preserveRaw: true });
                     }
                 }
-
+                
                 // population blocked
                 if (!propertyDsrp.populate) {
                     return;
                 }
-
+                
                 if (rawValue === undefined || rawValue === null) {
                     this[property] = rawValue;
                 }
@@ -62,7 +68,7 @@ export default class Initializable<T>
                 }
                 else if (propertyDsrp.isArray) {
                     this[property] = [];
-
+                    
                     if (rawValue instanceof Array) {
                         rawValue.forEach((elm) => {
                             const subElm = this._parseRawValue(propertyDsrp, elm);
@@ -82,13 +88,13 @@ export default class Initializable<T>
                 }
             });
     }
-
-    protected _parseRawValue(propertyDsrp : PropertyDescriptor, rawValue : any)
+    
+    protected _parseRawValue (propertyDsrp : PropertyDescriptor, rawValue : any)
     {
         const type : any = propertyDsrp.arrayOf || propertyDsrp.type;
-
+        
         if (rawValue === undefined || rawValue === null) {
-            return  rawValue;
+            return rawValue;
         }
         else if (!type) {
             return rawValue;
@@ -119,5 +125,5 @@ export default class Initializable<T>
             return new type(rawValue);
         }
     }
-
+    
 }
